@@ -1,26 +1,30 @@
-exchange_rates = {
-    "USD": 0.0036,  # 1 PKR = 0.0036 USD
-    "GBP": 0.0028,  # 1 PKR = 0.0028 GBP
-    "CNY": 0.026,   # 1 PKR = 0.026 CNY
-    "RUB": 0.33,    # 1 PKR = 0.33 RUB
-    "IDR": 56.7     # 1 PKR = 56.7 IDR
-}
+import streamlit as st
+import requests
 
-# Streamlit UI
-st.title("💱 PKR Currency Converter")
+def get_exchange_rate(base_currency, target_currency):
+    url = f"https://api.exchangerate-api.com/v4/latest/{base_currency}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return data['rates'].get(target_currency, None)
+    return None
 
-# User inputs amount in PKR
-amount = st.number_input("Enter amount in PKR", min_value=0.0, format="%.2f")
+def main():
+    st.title("Currency Converter")
+    
+    currencies = ["USD", "EUR", "GBP", "PKR", "INR", "CAD", "AUD", "JPY"]
+    
+    base_currency = st.selectbox("From Currency", currencies)
+    target_currency = st.selectbox("To Currency", currencies)
+    amount = st.number_input("Amount", min_value=0.01, value=1.0, step=0.01)
+    
+    if st.button("Convert"):
+        rate = get_exchange_rate(base_currency, target_currency)
+        if rate:
+            converted_amount = amount * rate
+            st.success(f"{amount} {base_currency} = {converted_amount:.2f} {target_currency}")
+        else:
+            st.error("Error fetching exchange rate. Please try again.")
 
-# Dropdown for currency selection
-currency = st.selectbox("Select currency to convert:", list(exchange_rates.keys()))
-
-# Convert button
-if st.button("Converted"):
-    if amount > 0:
-        converted_amount = amount * exchange_rates[currency]
-        st.success(f"**{amount} PKR = {converted_amount:.2f} {currency}**")
-    else:
-        st.warning("Enter a valid amount.")    
-
-
+if __name__ == "__main__":
+    main()
